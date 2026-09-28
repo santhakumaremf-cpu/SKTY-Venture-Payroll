@@ -1,1 +1,304 @@
-PLACEHOLDER
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SKTY Venture - Payroll Web App</title>
+<style>
+  :root {
+    --primary: #1a365d;
+    --primary-light: #2b6cb0;
+    --accent: #3182ce;
+    --success: #38a169;
+    --danger: #e53e3e;
+    --bg: #f0f4f8;
+    --card: #ffffff;
+    --border: #e2e8f0;
+    --text: #2d3748;
+    --muted: #718096;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); line-height: 1.5; }
+  .app { display: flex; min-height: 100vh; }
+  .sidebar {
+    width: 260px; background: var(--primary); color: white; padding: 20px 0;
+    position: fixed; height: 100vh; overflow-y: auto; z-index: 100;
+    transition: transform 0.3s;
+  }
+  .sidebar .logo { padding: 0 20px 20px; border-bottom: 1px solid rgba(255,255,255,0.15); margin-bottom: 12px; }
+  .sidebar .logo h1 { font-size: 1.35rem; font-weight: 700; }
+  .sidebar .logo p { font-size: 0.8rem; opacity: 0.75; margin-top: 2px; }
+  .nav-item {
+    display: flex; align-items: center; gap: 10px; padding: 12px 20px;
+    cursor: pointer; font-size: 0.92rem; border-left: 3px solid transparent;
+    transition: all 0.15s;
+  }
+  .nav-item:hover, .nav-item.active { background: rgba(255,255,255,0.1); border-left-color: #63b3ed; }
+  .nav-item span { font-size: 1.1rem; }
+  .main { margin-left: 260px; flex: 1; padding: 24px; max-width: 1400px; }
+  .page { display: none; }
+  .page.active { display: block; }
+  .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }
+  .page-header h2 { font-size: 1.5rem; color: var(--primary); }
+  .card { background: var(--card); border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+  .card h3 { font-size: 1.1rem; margin-bottom: 14px; color: var(--primary); }
+  table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+  th, td { padding: 9px 10px; text-align: left; border-bottom: 1px solid var(--border); }
+  th { background: #edf2f7; font-weight: 600; position: sticky; top: 0; white-space: nowrap; }
+  tr:hover { background: #f7fafc; }
+  .num { text-align: right; font-variant-numeric: tabular-nums; }
+  .total-row { font-weight: 700; background: #ebf8ff !important; }
+  .grand { background: #c6f6d5 !important; font-weight: 700; }
+  .form-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; margin-bottom: 16px; }
+  .form-group label { display: block; font-size: 0.8rem; font-weight: 600; color: var(--muted); margin-bottom: 4px; }
+  .form-group input, .form-group select {
+    width: 100%; padding: 8px 10px; border: 1px solid var(--border); border-radius: 6px;
+    font-size: 0.9rem; outline: none; transition: border 0.15s;
+  }
+  .form-group input:focus, .form-group select:focus { border-color: var(--accent); }
+  .btn {
+    display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px;
+    border: none; border-radius: 6px; font-size: 0.88rem; font-weight: 600;
+    cursor: pointer; transition: all 0.15s;
+  }
+  .btn-primary { background: var(--accent); color: white; }
+  .btn-primary:hover { background: #2b6cb0; }
+  .btn-success { background: var(--success); color: white; }
+  .btn-danger { background: var(--danger); color: white; }
+  .btn-outline { background: white; border: 1px solid var(--border); color: var(--text); }
+  .btn-outline:hover { background: #edf2f7; }
+  .btn-sm { padding: 5px 10px; font-size: 0.8rem; }
+  .btn-group { display: flex; gap: 8px; flex-wrap: wrap; }
+  .stats { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 14px; margin-bottom: 20px; }
+  .stat-card {
+    background: white; border-radius: 10px; padding: 16px; text-align: center;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06); border-top: 3px solid var(--accent);
+  }
+  .stat-card .value { font-size: 1.4rem; font-weight: 700; color: var(--primary); }
+  .stat-card .label { font-size: 0.78rem; color: var(--muted); margin-top: 2px; }
+  .menu-toggle { display: none; position: fixed; top: 12px; left: 12px; z-index: 200;
+    background: var(--primary); color: white; border: none; padding: 8px 12px; border-radius: 6px; font-size: 1.2rem; }
+  @media (max-width: 768px) {
+    .sidebar { transform: translateX(-100%); }
+    .sidebar.open { transform: translateX(0); }
+    .main { margin-left: 0; padding: 16px; padding-top: 60px; }
+    .menu-toggle { display: block; }
+    .form-grid { grid-template-columns: 1fr 1fr; }
+  }
+  .table-wrap { overflow-x: auto; }
+  .empty { text-align: center; padding: 40px; color: var(--muted); }
+  .badge { display: inline-block; background: #ebf8ff; color: var(--accent); padding: 2px 8px; border-radius: 999px; font-size: 0.75rem; font-weight: 600; }
+  .toast {
+    position: fixed; bottom: 24px; right: 24px; background: var(--primary); color: white;
+    padding: 12px 20px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    z-index: 999; display: none; animation: slideUp 0.3s;
+  }
+  @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+</style>
+</head>
+<body>
+<button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+<div class="app">
+  <aside class="sidebar" id="sidebar">
+    <div class="logo">
+      <h1>SKTY Venture</h1>
+      <p>Payroll Web App</p>
+    </div>
+    <div class="nav-item active" data-page="dashboard"><span>📊</span> Dashboard</div>
+    <div class="nav-item" data-page="workers"><span>👷</span> Worker Master</div>
+    <div class="nav-item" data-page="attendance"><span>📅</span> Attendance</div>
+    <div class="nav-item" data-page="ot"><span>⏱️</span> OT Entry</div>
+    <div class="nav-item" data-page="incentive"><span>💰</span> Incentive & Busfare</div>
+    <div class="nav-item" data-page="machine"><span>🔧</span> Machine Cleaning</div>
+    <div class="nav-item" data-page="gas"><span>⛽</span> Gas Allowance</div>
+    <div class="nav-item" data-page="fitters"><span>🛠️</span> Fitters & Electricians</div>
+    <div class="nav-item" data-page="staff"><span>👔</span> Staff Salaries</div>
+    <div class="nav-item" data-page="abstract"><span>📋</span> Wages Abstract</div>
+    <div class="nav-item" data-page="export"><span>💾</span> Export / Backup</div>
+  </aside>
+  <main class="main">
+    <div class="page active" id="dashboard">
+      <div class="page-header"><h2>Dashboard</h2><span class="badge">SKTY Venture</span></div>
+      <div class="stats" id="dashStats"></div>
+      <div class="card"><h3>Quick Summary</h3><div class="table-wrap"><table id="dashTable"><thead><tr><th>Category</th><th class="num">Count</th><th class="num">Gross</th><th class="num">Net</th></tr></thead><tbody></tbody></table></div></div>
+    </div>
+    <div class="page" id="workers">
+      <div class="page-header"><h2>Worker Master</h2><button class="btn btn-primary" onclick="showWorkerForm()">+ Add Worker</button></div>
+      <div class="card" id="workerFormCard" style="display:none;">
+        <h3 id="workerFormTitle">Add Worker</h3>
+        <div class="form-grid">
+          <div class="form-group"><label>Ticket No *</label><input id="w_tkt" type="text"></div>
+          <div class="form-group"><label>Name *</label><input id="w_name" type="text"></div>
+          <div class="form-group"><label>Dept</label><select id="w_dept"><option>Production</option><option>FITT</option><option>ELEC</option><option>WARD</option><option>BUFF</option><option>Other</option></select></div>
+          <div class="form-group"><label>Wages / Day</label><input id="w_wage" type="number" value="300"></div>
+          <div class="form-group"><label>Account No</label><input id="w_acc" type="text"></div>
+          <div class="form-group"><label>Group (Gas)</label><select id="w_group"><option value="">–</option><option>Gorachand</option><option>Vijaymandal</option><option>Sunil</option><option>Rajan</option><option>Anwar</option><option>Anandh</option><option>Manish</option><option>Jithendar</option></select></div>
+        </div>
+        <div class="btn-group"><button class="btn btn-success" onclick="saveWorker()">Save</button><button class="btn btn-outline" onclick="hideWorkerForm()">Cancel</button></div>
+      </div>
+      <div class="card"><div class="table-wrap"><table id="workersTable"><thead><tr><th>Tkt</th><th>Name</th><th>Dept</th><th class="num">Wage/Day</th><th>Account</th><th>Group</th><th>Action</th></tr></thead><tbody></tbody></table></div></div>
+    </div>
+    <div class="page" id="attendance">
+      <div class="page-header"><h2>Attendance Entry</h2></div>
+      <div class="card">
+        <div class="form-grid">
+          <div class="form-group"><label>Select Worker</label><select id="att_worker" onchange="loadAttForm()"></select></div>
+          <div class="form-group"><label>Days 1-15</label><input id="att_1_15" type="number" step="0.5" min="0" max="15" value="0"></div>
+          <div class="form-group"><label>Days 16-30</label><input id="att_16_30" type="number" step="0.5" min="0" max="16" value="0"></div>
+        </div>
+        <button class="btn btn-success" onclick="saveAttendance()">Save Attendance</button>
+      </div>
+      <div class="card"><div class="table-wrap"><table id="attTable"><thead><tr><th>Tkt</th><th>Name</th><th class="num">1-15</th><th class="num">16-30</th><th class="num">Total Days</th><th class="num">Gross</th><th>Action</th></tr></thead><tbody></tbody></table></div></div>
+    </div>
+    <div class="page" id="ot">
+      <div class="page-header"><h2>OT Entry</h2></div>
+      <div class="card">
+        <div class="form-grid">
+          <div class="form-group"><label>Select Worker</label><select id="ot_worker"></select></div>
+          <div class="form-group"><label>OT Hrs 1-15</label><input id="ot_1_15" type="number" step="0.5" min="0" value="0"></div>
+          <div class="form-group"><label>OT Hrs 16-30</label><input id="ot_16_30" type="number" step="0.5" min="0" value="0"></div>
+          <div class="form-group"><label>Incentive Amt</label><input id="ot_inc" type="number" step="0.5" min="0" value="0"></div>
+        </div>
+        <button class="btn btn-success" onclick="saveOT()">Save OT</button>
+      </div>
+      <div class="card"><div class="table-wrap"><table id="otTable"><thead><tr><th>Tkt</th><th>Name</th><th class="num">OT Hrs</th><th class="num">OT Amount</th><th class="num">Incentive</th><th class="num">Total</th><th>Action</th></tr></thead><tbody></tbody></table></div></div>
+    </div>
+    <div class="page" id="incentive">
+      <div class="page-header"><h2>Incentive & Busfare</h2></div>
+      <div class="card">
+        <div class="form-grid">
+          <div class="form-group"><label>Select Worker</label><select id="inc_worker"></select></div>
+          <div class="form-group"><label>Incentive 1-15</label><input id="inc_1_15" type="number" step="1" min="0" value="0"></div>
+          <div class="form-group"><label>Incentive 16-30</label><input id="inc_16_30" type="number" step="1" min="0" value="0"></div>
+          <div class="form-group"><label>Busfare 1-15</label><input id="bus_1_15" type="number" step="1" min="0" value="0"></div>
+          <div class="form-group"><label>Busfare 16-30</label><input id="bus_16_30" type="number" step="1" min="0" value="0"></div>
+        </div>
+        <button class="btn btn-success" onclick="saveIncentive()">Save</button>
+      </div>
+      <div class="card"><div class="table-wrap"><table id="incTable"><thead><tr><th>Tkt</th><th>Name</th><th class="num">Inc 1-15</th><th class="num">Inc 16-30</th><th class="num">Total Inc</th><th class="num">Bus 1-15</th><th class="num">Bus 16-30</th><th class="num">Total Bus</th><th>Action</th></tr></thead><tbody></tbody></table></div></div>
+    </div>
+    <div class="page" id="machine">
+      <div class="page-header"><h2>Machine Cleaning</h2><button class="btn btn-primary" onclick="showMCForm()">+ Add</button></div>
+      <div class="card" id="mcFormCard" style="display:none;">
+        <div class="form-grid">
+          <div class="form-group"><label>Name *</label><input id="mc_name" type="text"></div>
+          <div class="form-group"><label>Wage / Day</label><input id="mc_wage" type="number" value="350"></div>
+          <div class="form-group"><label>Days 1-15</label><input id="mc_1_15" type="number" step="0.5" value="0"></div>
+          <div class="form-group"><label>Days 16-30</label><input id="mc_16_30" type="number" step="0.5" value="0"></div>
+          <div class="form-group"><label>OT Hrs</label><input id="mc_ot" type="number" step="0.5" value="0"></div>
+        </div>
+        <div class="btn-group"><button class="btn btn-success" onclick="saveMC()">Save</button><button class="btn btn-outline" onclick="document.getElementById('mcFormCard').style.display='none'">Cancel</button></div>
+      </div>
+      <div class="card"><div class="table-wrap"><table id="mcTable"><thead><tr><th>Name</th><th class="num">Wage</th><th class="num">Days</th><th class="num">Gross</th><th class="num">OT Hrs</th><th class="num">OT Amt</th><th>Action</th></tr></thead><tbody></tbody></table></div></div>
+    </div>
+    <div class="page" id="gas">
+      <div class="page-header"><h2>Gas Cylinder Allowance</h2></div>
+      <div class="card">
+        <p style="margin-bottom:12px;color:var(--muted);font-size:0.9rem;">Rate: ₹7 per day.</p>
+        <div class="form-grid">
+          <div class="form-group"><label>Select Worker</label><select id="gas_worker"></select></div>
+          <div class="form-group"><label>Days Present</label><input id="gas_days" type="number" step="0.5" min="0" max="31" value="0"></div>
+        </div>
+        <button class="btn btn-success" onclick="saveGas()">Save Gas Allowance</button>
+      </div>
+      <div class="card"><div class="table-wrap"><table id="gasTable"><thead><tr><th>Group</th><th>Tkt</th><th>Name</th><th class="num">Days</th><th class="num">Amount (₹7)</th><th>Action</th></tr></thead><tbody></tbody></table></div></div>
+    </div>
+    <div class="page" id="fitters">
+      <div class="page-header"><h2>Fitters & Electricians</h2><button class="btn btn-primary" onclick="showFitterForm()">+ Add</button></div>
+      <div class="card" id="fitterFormCard" style="display:none;">
+        <div class="form-grid">
+          <div class="form-group"><label>Ticket No</label><input id="f_tkt" type="text"></div>
+          <div class="form-group"><label>Name</label><input id="f_name" type="text"></div>
+          <div class="form-group"><label>Dept</label><select id="f_dept"><option>FITT</option><option>ELEC</option><option>BUFF</option><option>WARD</option></select></div>
+          <div class="form-group"><label>Wage / Day</label><input id="f_wage" type="number" value="500"></div>
+          <div class="form-group"><label>Days</label><input id="f_days" type="number" step="0.5" value="0"></div>
+          <div class="form-group"><label>OT Hrs</label><input id="f_ot" type="number" step="0.5" value="0"></div>
+          <div class="form-group"><label>Account No</label><input id="f_acc" type="text"></div>
+        </div>
+        <div class="btn-group"><button class="btn btn-success" onclick="saveFitter()">Save</button><button class="btn btn-outline" onclick="document.getElementById('fitterFormCard').style.display='none'">Cancel</button></div>
+      </div>
+      <div class="card"><div class="table-wrap"><table id="fitterTable"><thead><tr><th>Tkt</th><th>Name</th><th>Dept</th><th class="num">Wage</th><th class="num">Days</th><th class="num">Gross</th><th class="num">OT Hrs</th><th class="num">OT Amt</th><th>Action</th></tr></thead><tbody></tbody></table></div></div>
+    </div>
+    <div class="page" id="staff">
+      <div class="page-header"><h2>Staff Salaries</h2><button class="btn btn-primary" onclick="showStaffForm()">+ Add</button></div>
+      <div class="card" id="staffFormCard" style="display:none;">
+        <div class="form-grid">
+          <div class="form-group"><label>Designation</label><select id="s_desg"><option>QCM</option><option>ACC</option><option>SUP</option><option>QC</option><option>ES</option><option>DRIVER</option><option>STORES</option><option>PRO</option><option>GH</option><option>Other</option></select></div>
+          <div class="form-group"><label>Name</label><input id="s_name" type="text"></div>
+          <div class="form-group"><label>Monthly Salary</label><input id="s_salary" type="number" value="15000"></div>
+          <div class="form-group"><label>Days Worked</label><input id="s_days" type="number" step="0.5" value="26"></div>
+          <div class="form-group"><label>PF</label><input id="s_pf" type="number" value="0"></div>
+          <div class="form-group"><label>ESI</label><input id="s_esi" type="number" value="0"></div>
+          <div class="form-group"><label>Advance</label><input id="s_adv" type="number" value="0"></div>
+          <div class="form-group"><label>Account No</label><input id="s_acc" type="text"></div>
+        </div>
+        <div class="btn-group"><button class="btn btn-success" onclick="saveStaff()">Save</button><button class="btn btn-outline" onclick="document.getElementById('staffFormCard').style.display='none'">Cancel</button></div>
+      </div>
+      <div class="card"><div class="table-wrap"><table id="staffTable"><thead><tr><th>Desg</th><th>Name</th><th class="num">Salary</th><th class="num">Days</th><th class="num">Gross</th><th class="num">PF</th><th class="num">ESI</th><th class="num">Adv</th><th class="num">Net</th><th>Action</th></tr></thead><tbody></tbody></table></div></div>
+    </div>
+    <div class="page" id="abstract">
+      <div class="page-header"><h2>Wages Abstract</h2></div>
+      <div class="card"><div class="table-wrap"><table id="abstractTable"><thead><tr><th>S.No</th><th>Particulars</th><th class="num">Gross</th><th class="num">Inc/Bus</th><th class="num">PF</th><th class="num">ESI</th><th class="num">Cant/Adv</th><th class="num">Net</th></tr></thead><tbody></tbody></table></div></div>
+    </div>
+    <div class="page" id="export">
+      <div class="page-header"><h2>Export / Backup</h2></div>
+      <div class="card"><h3>Download Data</h3><div class="btn-group" style="margin-top:12px;"><button class="btn btn-primary" onclick="exportJSON()">Download Full Backup (JSON)</button><button class="btn btn-success" onclick="exportCSV('workers')">Workers CSV</button><button class="btn btn-success" onclick="exportCSV('attendance')">Attendance CSV</button><button class="btn btn-success" onclick="exportCSV('ot')">OT CSV</button></div></div>
+      <div class="card"><h3>Import Backup</h3><input type="file" id="importFile" accept=".json" style="margin:12px 0;"><button class="btn btn-primary" onclick="importJSON()">Import JSON</button></div>
+      <div class="card"><h3>Clear All Data</h3><p style="color:var(--danger);margin-bottom:12px;">This will delete everything permanently.</p><button class="btn btn-danger" onclick="clearAll()">Clear All Data</button></div>
+    </div>
+  </main>
+</div>
+<div class="toast" id="toast"></div>
+<script>
+const STORAGE_KEY = 'skty_payroll_v1';
+let data = { workers: [], attendance: {}, ot: {}, incentive: {}, machine: [], gas: {}, fitters: [], staff: [] };
+function loadData() { try { const raw = localStorage.getItem(STORAGE_KEY); if (raw) data = JSON.parse(raw); } catch(e) {} }
+function saveData() { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); toast('Saved'); refreshAll(); }
+function toast(msg) { const t = document.getElementById('toast'); t.textContent = msg; t.style.display = 'block'; setTimeout(() => t.style.display = 'none', 2000); }
+function fmt(n) { return (n||0).toLocaleString('en-IN', {maximumFractionDigits: 2}); }
+function num(v) { return parseFloat(v) || 0; }
+document.querySelectorAll('.nav-item').forEach(el => { el.addEventListener('click', () => { document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active')); document.querySelectorAll('.page').forEach(p => p.classList.remove('active')); el.classList.add('active'); document.getElementById(el.dataset.page).classList.add('active'); if (window.innerWidth < 768) document.getElementById('sidebar').classList.remove('open'); refreshAll(); }); });
+function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); }
+let editWorkerIdx = -1;
+function showWorkerForm(idx = -1) { editWorkerIdx = idx; document.getElementById('workerFormCard').style.display = 'block'; document.getElementById('workerFormTitle').textContent = idx >= 0 ? 'Edit Worker' : 'Add Worker'; if (idx >= 0) { const w = data.workers[idx]; document.getElementById('w_tkt').value = w.tkt; document.getElementById('w_name').value = w.name; document.getElementById('w_dept').value = w.dept || 'Production'; document.getElementById('w_wage').value = w.wage; document.getElementById('w_acc').value = w.acc || ''; document.getElementById('w_group').value = w.group || ''; } else { ['w_tkt','w_name','w_acc'].forEach(id => document.getElementById(id).value = ''); document.getElementById('w_wage').value = 300; document.getElementById('w_dept').value = 'Production'; document.getElementById('w_group').value = ''; } }
+function hideWorkerForm() { document.getElementById('workerFormCard').style.display = 'none'; editWorkerIdx = -1; }
+function saveWorker() { const tkt = document.getElementById('w_tkt').value.trim(); const name = document.getElementById('w_name').value.trim(); if (!tkt || !name) { alert('Ticket No & Name required'); return; } const obj = { tkt, name, dept: document.getElementById('w_dept').value, wage: num(document.getElementById('w_wage').value), acc: document.getElementById('w_acc').value.trim(), group: document.getElementById('w_group').value }; if (editWorkerIdx >= 0) data.workers[editWorkerIdx] = obj; else { if (data.workers.find(w => w.tkt === tkt)) { alert('Ticket No already exists'); return; } data.workers.push(obj); } saveData(); hideWorkerForm(); }
+function deleteWorker(idx) { if (!confirm('Delete this worker?')) return; const tkt = data.workers[idx].tkt; data.workers.splice(idx, 1); delete data.attendance[tkt]; delete data.ot[tkt]; delete data.incentive[tkt]; delete data.gas[tkt]; saveData(); }
+function renderWorkers() { const tb = document.querySelector('#workersTable tbody'); tb.innerHTML = data.workers.map((w,i) => `<tr><td>${w.tkt}</td><td>${w.name}</td><td>${w.dept||''}</td><td class="num">${fmt(w.wage)}</td><td>${w.acc||''}</td><td>${w.group||''}</td><td><button class="btn btn-outline btn-sm" onclick="showWorkerForm(${i})">Edit</button> <button class="btn btn-danger btn-sm" onclick="deleteWorker(${i})">Del</button></td></tr>`).join('') || '<tr><td colspan="7" class="empty">No workers yet. Add some!</td></tr>'; ['att_worker','ot_worker','inc_worker','gas_worker'].forEach(id => { const sel = document.getElementById(id); if (!sel) return; const cur = sel.value; sel.innerHTML = '<option value="">– Select –</option>' + data.workers.map(w => `<option value="${w.tkt}">${w.tkt} - ${w.name}</option>`).join(''); if (cur) sel.value = cur; }); }
+function loadAttForm() { const tkt = document.getElementById('att_worker').value; if (!tkt) return; const a = data.attendance[tkt] || {d1_15:0, d16_30:0}; document.getElementById('att_1_15').value = a.d1_15; document.getElementById('att_16_30').value = a.d16_30; }
+function saveAttendance() { const tkt = document.getElementById('att_worker').value; if (!tkt) { alert('Select worker'); return; } data.attendance[tkt] = { d1_15: num(document.getElementById('att_1_15').value), d16_30: num(document.getElementById('att_16_30').value) }; saveData(); }
+function renderAttendance() { const tb = document.querySelector('#attTable tbody'); const rows = data.workers.filter(w => data.attendance[w.tkt]).map(w => { const a = data.attendance[w.tkt]; const days = a.d1_15 + a.d16_30; const gross = days * w.wage; return `<tr><td>${w.tkt}</td><td>${w.name}</td><td class="num">${a.d1_15}</td><td class="num">${a.d16_30}</td><td class="num">${days}</td><td class="num">${fmt(gross)}</td><td><button class="btn btn-danger btn-sm" onclick="delete data.attendance['${w.tkt}'];saveData()">Del</button></td></tr>`; }); tb.innerHTML = rows.join('') || '<tr><td colspan="7" class="empty">No attendance entered</td></tr>'; }
+function saveOT() { const tkt = document.getElementById('ot_worker').value; if (!tkt) { alert('Select worker'); return; } data.ot[tkt] = { h1_15: num(document.getElementById('ot_1_15').value), h16_30: num(document.getElementById('ot_16_30').value), inc: num(document.getElementById('ot_inc').value) }; saveData(); }
+function renderOT() { const tb = document.querySelector('#otTable tbody'); const rows = data.workers.filter(w => data.ot[w.tkt]).map(w => { const o = data.ot[w.tkt]; const hrs = o.h1_15 + o.h16_30; const otAmt = (hrs * w.wage) / 8; const total = otAmt + o.inc; return `<tr><td>${w.tkt}</td><td>${w.name}</td><td class="num">${hrs}</td><td class="num">${fmt(otAmt)}</td><td class="num">${fmt(o.inc)}</td><td class="num">${fmt(total)}</td><td><button class="btn btn-danger btn-sm" onclick="delete data.ot['${w.tkt}'];saveData()">Del</button></td></tr>`; }); tb.innerHTML = rows.join('') || '<tr><td colspan="7" class="empty">No OT entered</td></tr>'; }
+function saveIncentive() { const tkt = document.getElementById('inc_worker').value; if (!tkt) { alert('Select worker'); return; } data.incentive[tkt] = { inc1: num(document.getElementById('inc_1_15').value), inc2: num(document.getElementById('inc_16_30').value), bus1: num(document.getElementById('bus_1_15').value), bus2: num(document.getElementById('bus_16_30').value) }; saveData(); }
+function renderIncentive() { const tb = document.querySelector('#incTable tbody'); const rows = data.workers.filter(w => data.incentive[w.tkt]).map(w => { const i = data.incentive[w.tkt]; return `<tr><td>${w.tkt}</td><td>${w.name}</td><td class="num">${fmt(i.inc1)}</td><td class="num">${fmt(i.inc2)}</td><td class="num">${fmt(i.inc1+i.inc2)}</td><td class="num">${fmt(i.bus1)}</td><td class="num">${fmt(i.bus2)}</td><td class="num">${fmt(i.bus1+i.bus2)}</td><td><button class="btn btn-danger btn-sm" onclick="delete data.incentive['${w.tkt}'];saveData()">Del</button></td></tr>`; }); tb.innerHTML = rows.join('') || '<tr><td colspan="9" class="empty">No incentive/busfare entered</td></tr>'; }
+function showMCForm() { document.getElementById('mcFormCard').style.display = 'block'; }
+function saveMC() { const name = document.getElementById('mc_name').value.trim(); if (!name) { alert('Name required'); return; } data.machine.push({ name, wage: num(document.getElementById('mc_wage').value), d1_15: num(document.getElementById('mc_1_15').value), d16_30: num(document.getElementById('mc_16_30').value), ot: num(document.getElementById('mc_ot').value) }); saveData(); document.getElementById('mcFormCard').style.display = 'none'; document.getElementById('mc_name').value = ''; }
+function renderMC() { const tb = document.querySelector('#mcTable tbody'); tb.innerHTML = data.machine.map((m,i) => { const days = m.d1_15 + m.d16_30; const gross = days * m.wage; const otAmt = (m.ot * m.wage) / 8; return `<tr><td>${m.name}</td><td class="num">${fmt(m.wage)}</td><td class="num">${days}</td><td class="num">${fmt(gross)}</td><td class="num">${m.ot}</td><td class="num">${fmt(otAmt)}</td><td><button class="btn btn-danger btn-sm" onclick="data.machine.splice(${i},1);saveData()">Del</button></td></tr>`; }).join('') || '<tr><td colspan="7" class="empty">No machine cleaning entries</td></tr>'; }
+function saveGas() { const tkt = document.getElementById('gas_worker').value; if (!tkt) { alert('Select worker'); return; } data.gas[tkt] = num(document.getElementById('gas_days').value); saveData(); }
+function renderGas() { const tb = document.querySelector('#gasTable tbody'); const rows = data.workers.filter(w => data.gas[w.tkt] !== undefined).map(w => { const days = data.gas[w.tkt]; return `<tr><td>${w.group||'–'}</td><td>${w.tkt}</td><td>${w.name}</td><td class="num">${days}</td><td class="num">${fmt(days * 7)}</td><td><button class="btn btn-danger btn-sm" onclick="delete data.gas['${w.tkt}'];saveData()">Del</button></td></tr>`; }); tb.innerHTML = rows.join('') || '<tr><td colspan="6" class="empty">No gas allowance entered</td></tr>'; }
+function showFitterForm() { document.getElementById('fitterFormCard').style.display = 'block'; }
+function saveFitter() { const tkt = document.getElementById('f_tkt').value.trim(); const name = document.getElementById('f_name').value.trim(); if (!tkt || !name) { alert('Tkt & Name required'); return; } data.fitters.push({ tkt, name, dept: document.getElementById('f_dept').value, wage: num(document.getElementById('f_wage').value), days: num(document.getElementById('f_days').value), ot: num(document.getElementById('f_ot').value), acc: document.getElementById('f_acc').value.trim() }); saveData(); document.getElementById('fitterFormCard').style.display = 'none'; }
+function renderFitters() { const tb = document.querySelector('#fitterTable tbody'); tb.innerHTML = data.fitters.map((f,i) => { const gross = f.days * f.wage; const otAmt = (f.ot * f.wage) / 8; return `<tr><td>${f.tkt}</td><td>${f.name}</td><td>${f.dept}</td><td class="num">${fmt(f.wage)}</td><td class="num">${f.days}</td><td class="num">${fmt(gross)}</td><td class="num">${f.ot}</td><td class="num">${fmt(otAmt)}</td><td><button class="btn btn-danger btn-sm" onclick="data.fitters.splice(${i},1);saveData()">Del</button></td></tr>`; }).join('') || '<tr><td colspan="9" class="empty">No fitters/electricians</td></tr>'; }
+function showStaffForm() { document.getElementById('staffFormCard').style.display = 'block'; }
+function saveStaff() { const name = document.getElementById('s_name').value.trim(); if (!name) { alert('Name required'); return; } const salary = num(document.getElementById('s_salary').value); const days = num(document.getElementById('s_days').value); const gross = (salary / 26) * days; data.staff.push({ desg: document.getElementById('s_desg').value, name, salary, days, gross, pf: num(document.getElementById('s_pf').value), esi: num(document.getElementById('s_esi').value), adv: num(document.getElementById('s_adv').value), acc: document.getElementById('s_acc').value.trim() }); saveData(); document.getElementById('staffFormCard').style.display = 'none'; }
+function renderStaff() { const tb = document.querySelector('#staffTable tbody'); tb.innerHTML = data.staff.map((s,i) => { const net = s.gross - s.pf - s.esi - s.adv; return `<tr><td>${s.desg}</td><td>${s.name}</td><td class="num">${fmt(s.salary)}</td><td class="num">${s.days}</td><td class="num">${fmt(s.gross)}</td><td class="num">${fmt(s.pf)}</td><td class="num">${fmt(s.esi)}</td><td class="num">${fmt(s.adv)}</td><td class="num">${fmt(net)}</td><td><button class="btn btn-danger btn-sm" onclick="data.staff.splice(${i},1);saveData()">Del</button></td></tr>`; }).join('') || '<tr><td colspan="10" class="empty">No staff entries</td></tr>'; }
+function calcWorkersGross() { let gross = 0, count = 0; data.workers.forEach(w => { const a = data.attendance[w.tkt]; if (a) { gross += (a.d1_15 + a.d16_30) * w.wage; count++; } }); return {gross, count}; }
+function calcIncBus() { let total = 0; Object.values(data.incentive).forEach(i => total += i.inc1 + i.inc2 + i.bus1 + i.bus2); return total; }
+function calcOT() { let total = 0; data.workers.forEach(w => { const o = data.ot[w.tkt]; if (o) total += ((o.h1_15 + o.h16_30) * w.wage / 8) + o.inc; }); return total; }
+function calcMC() { let gross = 0, ot = 0; data.machine.forEach(m => { gross += (m.d1_15 + m.d16_30) * m.wage; ot += (m.ot * m.wage) / 8; }); return {gross, ot}; }
+function calcGas() { let total = 0; Object.values(data.gas).forEach(d => total += d * 7); return total; }
+function calcFitters() { let gross = 0, ot = 0; data.fitters.forEach(f => { gross += f.days * f.wage; ot += (f.ot * f.wage) / 8; }); return {gross, ot}; }
+function calcStaff() { let gross = 0, net = 0; data.staff.forEach(s => { gross += s.gross; net += s.gross - s.pf - s.esi - s.adv; }); return {gross, net}; }
+function renderDashboard() { const wg = calcWorkersGross(); const mc = calcMC(); const ft = calcFitters(); const st = calcStaff(); const otTotal = calcOT(); const gas = calcGas(); const incBus = calcIncBus(); document.getElementById('dashStats').innerHTML = `<div class="stat-card"><div class="value">${data.workers.length}</div><div class="label">Workers</div></div><div class="stat-card"><div class="value">${fmt(wg.gross)}</div><div class="label">Workers Gross</div></div><div class="stat-card"><div class="value">${fmt(otTotal)}</div><div class="label">OT + Inc</div></div><div class="stat-card"><div class="value">${fmt(mc.gross)}</div><div class="label">Machine Cleaning</div></div><div class="stat-card"><div class="value">${fmt(gas)}</div><div class="label">Gas Allowance</div></div><div class="stat-card"><div class="value">${fmt(st.gross)}</div><div class="label">Staff Gross</div></div>`; document.querySelector('#dashTable tbody').innerHTML = `<tr><td>Workers</td><td class="num">${wg.count}</td><td class="num">${fmt(wg.gross)}</td><td class="num">${fmt(wg.gross + incBus)}</td></tr><tr><td>Machine Cleaning</td><td class="num">${data.machine.length}</td><td class="num">${fmt(mc.gross)}</td><td class="num">${fmt(mc.gross)}</td></tr><tr><td>Fitters & Electricians</td><td class="num">${data.fitters.length}</td><td class="num">${fmt(ft.gross)}</td><td class="num">${fmt(ft.gross)}</td></tr><tr><td>Staff</td><td class="num">${data.staff.length}</td><td class="num">${fmt(st.gross)}</td><td class="num">${fmt(st.net)}</td></tr><tr class="total-row"><td>OT Total</td><td class="num">–</td><td class="num">${fmt(otTotal + mc.ot + ft.ot)}</td><td class="num">${fmt(otTotal + mc.ot + ft.ot)}</td></tr>`; }
+function renderAbstract() { const wg = calcWorkersGross(); const incBus = calcIncBus(); const ot = calcOT(); const mc = calcMC(); const gas = calcGas(); const ft = calcFitters(); const st = calcStaff(); const rows = [ {sno:1, name:'Workers', gross:wg.gross, inc:incBus, pf:0, esi:0, cant:0, net:wg.gross+incBus}, {sno:2, name:'Machine Cleaning', gross:mc.gross, inc:0, pf:0, esi:0, cant:0, net:mc.gross}, {sno:3, name:'Gas Allowance', gross:gas, inc:0, pf:0, esi:0, cant:0, net:gas}, {sno:4, name:'Workers OT', gross:ot, inc:0, pf:0, esi:0, cant:0, net:ot}, {sno:5, name:'Machine Cleaning OT', gross:mc.ot, inc:0, pf:0, esi:0, cant:0, net:mc.ot}, {sno:6, name:'Fitters & Electricians', gross:ft.gross, inc:0, pf:0, esi:0, cant:0, net:ft.gross}, {sno:7, name:'Fitters OT', gross:ft.ot, inc:0, pf:0, esi:0, cant:0, net:ft.ot}, {sno:8, name:'Staff Salaries', gross:st.gross, inc:0, pf:0, esi:0, cant:0, net:st.net} ]; const totalGross = rows.reduce((s,r)=>s+r.gross,0); const totalNet = rows.reduce((s,r)=>s+r.net,0); document.querySelector('#abstractTable tbody').innerHTML = rows.map(r => `<tr><td>${r.sno}</td><td>${r.name}</td><td class="num">${fmt(r.gross)}</td><td class="num">${fmt(r.inc)}</td><td class="num">${fmt(r.pf)}</td><td class="num">${fmt(r.esi)}</td><td class="num">${fmt(r.cant)}</td><td class="num">${fmt(r.net)}</td></tr>`).join('') + `<tr class="grand"><td></td><td>GRAND TOTAL</td><td class="num">${fmt(totalGross)}</td><td class="num">${fmt(incBus)}</td><td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">${fmt(totalNet)}</td></tr>`; }
+function exportJSON() { const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'}); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'SKTY_Payroll_Backup_' + new Date().toISOString().slice(0,10) + '.json'; a.click(); toast('JSON downloaded'); }
+function exportCSV(type) { let csv = '', filename = ''; if (type === 'workers') { csv = 'Tkt,Name,Dept,Wage,Account,Group\n' + data.workers.map(w => `${w.tkt},${w.name},${w.dept},${w.wage},${w.acc},${w.group}`).join('\n'); filename = 'workers.csv'; } else if (type === 'attendance') { csv = 'Tkt,Name,Days1-15,Days16-30,Total,Gross\n'; data.workers.forEach(w => { const a = data.attendance[w.tkt]; if (a) csv += `${w.tkt},${w.name},${a.d1_15},${a.d16_30},${a.d1_15+a.d16_30},${(a.d1_15+a.d16_30)*w.wage}\n`; }); filename = 'attendance.csv'; } else if (type === 'ot') { csv = 'Tkt,Name,OTHrs,OTAmt,Incentive,Total\n'; data.workers.forEach(w => { const o = data.ot[w.tkt]; if (o) { const hrs = o.h1_15 + o.h16_30; const amt = hrs * w.wage / 8; csv += `${w.tkt},${w.name},${hrs},${amt},${o.inc},${amt+o.inc}\n`; } }); filename = 'ot.csv'; } const blob = new Blob([csv], {type:'text/csv'}); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = filename; a.click(); toast('CSV downloaded'); }
+function importJSON() { const file = document.getElementById('importFile').files[0]; if (!file) { alert('Select a JSON file'); return; } const reader = new FileReader(); reader.onload = e => { try { data = JSON.parse(e.target.result); saveData(); toast('Imported successfully'); } catch(err) { alert('Invalid JSON file'); } }; reader.readAsText(file); }
+function clearAll() { if (!confirm('Delete ALL data permanently?')) return; data = {workers:[],attendance:{},ot:{},incentive:{},machine:[],gas:{},fitters:[],staff:[]}; saveData(); toast('All data cleared'); }
+function refreshAll() { renderWorkers(); renderAttendance(); renderOT(); renderIncentive(); renderMC(); renderGas(); renderFitters(); renderStaff(); renderDashboard(); renderAbstract(); }
+loadData();
+refreshAll();
+</script>
+</body>
+</html>
