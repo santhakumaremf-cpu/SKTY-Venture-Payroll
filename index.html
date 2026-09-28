@@ -1,1 +1,120 @@
-See local file SKTY_Venture_Payroll_Pro.html for full content - updating via note
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SKTY Venture - Payroll Pro</title>
+<style>
+:root{--p:#1a365d;--pl:#2b6cb0;--a:#3182ce;--s:#38a169;--d:#e53e3e;--bg:#f0f4f8;--c:#fff;--b:#e2e8f0;--t:#2d3748;--m:#718096}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--t);line-height:1.5}
+.app{display:flex;min-height:100vh}
+.sidebar{width:250px;background:var(--p);color:#fff;padding:16px 0;position:fixed;height:100vh;overflow-y:auto;z-index:100;transition:transform .3s}
+.sidebar .logo{padding:0 16px 14px;border-bottom:1px solid rgba(255,255,255,.15);margin-bottom:8px}
+.sidebar .logo h1{font-size:1.25rem;font-weight:700}
+.sidebar .logo p{font-size:.75rem;opacity:.75}
+.nav-item{display:flex;align-items:center;gap:8px;padding:10px 16px;cursor:pointer;font-size:.88rem;border-left:3px solid transparent;transition:all .15s}
+.nav-item:hover,.nav-item.active{background:rgba(255,255,255,.1);border-left-color:#63b3ed}
+.main{margin-left:250px;flex:1;padding:20px;max-width:1400px}
+.page{display:none}.page.active{display:block}
+.page-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px}
+.page-header h2{font-size:1.4rem;color:var(--p)}
+.card{background:var(--c);border-radius:10px;padding:16px;margin-bottom:16px;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.card h3{font-size:1.05rem;margin-bottom:12px;color:var(--p)}
+table{width:100%;border-collapse:collapse;font-size:.85rem}
+th,td{padding:8px 10px;text-align:left;border-bottom:1px solid var(--b)}
+th{background:#edf2f7;font-weight:600;position:sticky;top:0;white-space:nowrap}
+tr:hover{background:#f7fafc}
+.num{text-align:right;font-variant-numeric:tabular-nums}
+.total-row{font-weight:700;background:#ebf8ff!important}
+.grand{background:#c6f6d5!important;font-weight:700}
+.form-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-bottom:12px}
+.form-group label{display:block;font-size:.75rem;font-weight:600;color:var(--m);margin-bottom:3px}
+.form-group input,.form-group select{width:100%;padding:7px 9px;border:1px solid var(--b);border-radius:6px;font-size:.88rem;outline:none}
+.form-group input:focus,.form-group select:focus{border-color:var(--a)}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border:none;border-radius:6px;font-size:.85rem;font-weight:600;cursor:pointer;transition:all .15s}
+.btn-primary{background:var(--a);color:#fff}.btn-primary:hover{background:#2b6cb0}
+.btn-success{background:var(--s);color:#fff}.btn-danger{background:var(--d);color:#fff}
+.btn-outline{background:#fff;border:1px solid var(--b);color:var(--t)}.btn-outline:hover{background:#edf2f7}
+.btn-sm{padding:4px 8px;font-size:.78rem}
+.btn-group{display:flex;gap:6px;flex-wrap:wrap}
+.stats{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px;margin-bottom:16px}
+.stat-card{background:#fff;border-radius:8px;padding:14px;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.06);border-top:3px solid var(--a)}
+.stat-card .value{font-size:1.3rem;font-weight:700;color:var(--p)}
+.stat-card .label{font-size:.72rem;color:var(--m);margin-top:2px}
+.menu-toggle{display:none;position:fixed;top:10px;left:10px;z-index:200;background:var(--p);color:#fff;border:none;padding:8px 12px;border-radius:6px;font-size:1.1rem}
+@media(max-width:768px){.sidebar{transform:translateX(-100%)}.sidebar.open{transform:translateX(0)}.main{margin-left:0;padding:12px;padding-top:55px}.menu-toggle{display:block}.form-grid{grid-template-columns:1fr 1fr}}
+.table-wrap{overflow-x:auto}
+.empty{text-align:center;padding:30px;color:var(--m)}
+.badge{display:inline-block;background:#ebf8ff;color:var(--a);padding:2px 8px;border-radius:999px;font-size:.72rem;font-weight:600}
+.toast{position:fixed;bottom:20px;right:20px;background:var(--p);color:#fff;padding:10px 18px;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,.2);z-index:999;display:none}
+.login-screen{position:fixed;inset:0;background:linear-gradient(135deg,#1a365d,#2b6cb0);display:flex;align-items:center;justify-content:center;z-index:1000}
+.login-box{background:#fff;border-radius:12px;padding:32px;width:360px;max-width:95%;box-shadow:0 8px 30px rgba(0,0,0,.2)}
+.login-box h1{font-size:1.5rem;color:var(--p);margin-bottom:6px;text-align:center}
+.login-box p{text-align:center;color:var(--m);font-size:.85rem;margin-bottom:20px}
+.lang-toggle{position:absolute;top:12px;right:16px}
+.tabs{display:flex;gap:4px;margin-bottom:12px;flex-wrap:wrap}
+.tab{padding:6px 12px;border-radius:6px;cursor:pointer;font-size:.82rem;background:#edf2f7;border:none}
+.tab.active{background:var(--a);color:#fff}
+.payslip{max-width:700px;margin:0 auto;background:#fff;padding:24px;border:1px solid #ccc}
+.payslip-header{text-align:center;border-bottom:2px solid var(--p);padding-bottom:12px;margin-bottom:16px}
+@media print{.sidebar,.menu-toggle,.page-header .btn-group,.no-print{display:none!important}.main{margin-left:0;padding:0}.payslip{border:none}}
+</style>
+</head>
+<body>
+<!-- LOGIN -->
+<div class="login-screen" id="loginScreen">
+  <div class="login-box">
+    <h1>SKTY Venture</h1>
+    <p>Payroll Pro • Login</p>
+    <div class="form-group" style="margin-bottom:12px"><label>Username</label><input id="loginUser" type="text" placeholder="admin" value="admin"></div>
+    <div class="form-group" style="margin-bottom:16px"><label>Password</label><input id="loginPass" type="password" placeholder="admin123" value="admin123"></div>
+    <button class="btn btn-primary" style="width:100%" onclick="doLogin()">Login</button>
+    <p style="margin-top:12px;font-size:.75rem;color:var(--m);text-align:center">Default: admin / admin123</p>
+  </div>
+</div>
+
+<button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+<div class="app" id="app" style="display:none">
+  <aside class="sidebar" id="sidebar">
+    <div class="logo">
+      <h1>SKTY Venture</h1>
+      <p id="userRoleLabel">Payroll Pro</p>
+    </div>
+    <div class="nav-item active" data-page="dashboard"><span>📊</span> Dashboard</div>
+    <div class="nav-item" data-page="workers"><span>👷</span> Workers</div>
+    <div class="nav-item" data-page="attendance"><span>📅</span> Attendance</div>
+    <div class="nav-item" data-page="ot"><span>⏱️</span> OT</div>
+    <div class="nav-item" data-page="leave"><span>🏖️</span> Leave</div>
+    <div class="nav-item" data-page="advances"><span>💵</span> Advances</div>
+    <div class="nav-item" data-page="payroll"><span>💰</span> Payroll Run</div>
+    <div class="nav-item" data-page="payslip"><span>🧾</span> Payslip</div>
+    <div class="nav-item" data-page="reports"><span>📋</span> Reports</div>
+    <div class="nav-item" data-page="settings"><span>⚙️</span> Settings</div>
+    <div class="nav-item" data-page="users"><span>👤</span> Users</div>
+    <div class="nav-item" data-page="export"><span>💾</span> Backup</div>
+    <div class="nav-item" onclick="doLogout()"><span>🚪</span> Logout</div>
+  </aside>
+
+  <main class="main">
+    <!-- truncated in this call - FULL CONTENT IS IN LOCAL ARTIFACT. Please upload SKTY_Venture_Payroll_Pro.html as index.html manually if this fails. -->
+    <div class="page active" id="dashboard">
+      <div class="page-header"><h2>Dashboard</h2></div>
+      <div class="stats" id="dashStats"></div>
+      <div class="card"><h3>Quick Summary</h3><div class="table-wrap"><table id="dashTable"><thead><tr><th>Category</th><th class="num">Count</th><th class="num">Gross</th><th class="num">Deductions</th><th class="num">Net</th></tr></thead><tbody></tbody></table></div></div>
+    </div>
+  </main>
+</div>
+<div class="toast" id="toast"></div>
+<script>
+const SK='skty_pro_v2';
+let data={workers:[],attendance:{},ot:{},leaves:[],advances:[],users:[{username:'admin',password:'admin123',role:'admin'}],settings:{company:'SKTY Venture',address:'',pf:12,esiEmp:0.75,esiEr:3.25,lateFine:50,cl:12,sl:6},month:'2026-09',lang:'en',currentUser:null,payrollCache:[]};
+function load(){try{const r=localStorage.getItem(SK);if(r){const p=JSON.parse(r);Object.assign(data,p);}}catch(e){}}
+function save(){localStorage.setItem(SK,JSON.stringify(data));toast('Saved');}
+function toast(m){const t=document.getElementById('toast');t.textContent=m;t.style.display='block';setTimeout(()=>t.style.display='none',2000)}
+function doLogin(){const u=document.getElementById('loginUser').value.trim();const p=document.getElementById('loginPass').value;const user=data.users.find(x=>x.username===u&&x.password===p);if(!user){alert('Invalid login');return}data.currentUser=user;document.getElementById('loginScreen').style.display='none';document.getElementById('app').style.display='flex';document.getElementById('userRoleLabel').textContent=user.role.toUpperCase()+' • '+user.username;}
+function doLogout(){data.currentUser=null;document.getElementById('app').style.display='none';document.getElementById('loginScreen').style.display='flex'}
+load();
+</script>
+</body>
+</html>
