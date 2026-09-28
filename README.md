@@ -15,12 +15,17 @@ Full browser-based Payroll system for **SKTY Venture**.
 - Export (JSON backup + CSV) / Import
 
 ## How to use
-1. Open `index.html` in any modern browser (Chrome / Edge / Firefox)
-2. Data is saved automatically in browser LocalStorage
-3. Use Export page to download backup
+1. Download the complete `SKTY_Venture_Payroll_WebApp.html` from the conversation / artifacts
+2. Rename it to `index.html` if needed
+3. Open it in any modern browser (Chrome / Edge / Firefox)
+4. Data is saved automatically in browser LocalStorage
+5. Use Export page to download backup
 
-## Live Demo
-Just open the `index.html` file – no server required.
+## Repository
+https://github.com/santhakumaremf-cpu/SKTY-Venture-Payroll
+
+## Note
+The full interactive version (all modules) is the local HTML file generated in the chat. You can upload it here to replace the placeholder index.html.
 
 ---
 Created for SKTY Venture
